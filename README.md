@@ -14,19 +14,20 @@
 ---
 1. Nodeとエディタ あとyarnとか
 2. JavaScriptの闇に迫る
-3. 非同期 is 何
-4. ES6で美しく書こう
+3. 基礎の基礎
+4. 非同期 is 何
+5. ES6で美しく書こう
 <!-- 以下更新予定 -->
-5. もっと非同期する
+6. もっと非同期する
     - Promise
     - async/await
 
-6. 楽しいTypeScript
+7. 楽しいTypeScript
     - 型
     - Type aliasとInterface
     - 型定義ファイル
 
-7. 悪魔のWebpack
+8. 悪魔のWebpack
     - バンドラーとは
     - webpack.config.jsの書き方
     - 開発するときのTips
@@ -34,22 +35,22 @@
       - webpack-serve
       - DevelopmentビルドとProductionビルド
 
-8. いよいよReact
+9. いよいよReact
     - 最低限のコード
     - VirtualDOM？
     - jsx? tsx?
     - cssを書く
 
-9. コンポーネント至向とVirtualDOM
+10. コンポーネント至向とVirtualDOM
     - Reactにおけるコンポーネントとは
     - コンポーネントの書き方
       - SFC (Stateless Functional Component)
       - Class Style Component
 
-10. ゆるいSPAを作る(考え中)
+11. ゆるいSPAを作る(考え中)
     - React Router
 
-11. Ex. Redux
+12. Ex. Redux
     - Storeとは
       - バケツリレー問題
     - State/Reducer/Action/View
