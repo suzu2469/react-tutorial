@@ -96,7 +96,8 @@ console.log(a < b) // -> true
 console.log(a === c) // -> true
 console.log(a !== b) // -> false
 ```
-その他にも…
+その他にも…   
+
 |条件演算子|意味|
 |:-|:-|
 |a > b|aはbより大きい|
