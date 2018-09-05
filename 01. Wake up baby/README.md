@@ -40,6 +40,12 @@ $ npm install --dev PACKAGE_NAME
 
 # PCにパッケージ追加
 $ npm install --global PACKAGE_NAME
+
+# パッケージをアンインストール
+$ npm uninstall PACKAGE_NAME
+
+# 既にある package.json からインストール
+$ npm install
 ```
 
 # yarnを使おう
