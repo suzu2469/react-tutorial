@@ -157,4 +157,128 @@ new Promise(resolve => {
 
 新しく `.catch()` が出てきました。   
 `try/catch` と全く同じ意味の `.catch()` です。    
-察しの良い方ならもうお気づきかもしれませんがこの `.catch()` を指定すると `reject()` された時のエラーハンドリングをすることができます。   
+察しの良い方ならもうお気づきかもしれませんがこの `.catch()` を指定すると `reject()` された時のエラーハンドリングをすることができます。  
+例えばAPIからの値を [fetch](https://developer.mozilla.org/ja/docs/Web/API/Fetch_API/Using_Fetch) する時、よくお世話になるでしょう。
+
+```javascript
+// fetchはPromise型が返ってきます
+fetch('https://example.com/api/example')
+  .then(res => res.json())
+  .then(json => console.log(json))
+  .catch(e => console.error('Failed fetch'))
+```
+
+# async/await
+さて、一通り `Promise` の概要を読んで頂いたわけですが、実は昨今の *JavaScript* で `Promise` をそのまま使うことは少なくなってきています。   
+問題は、`Promise` はその処理を繋げるためコールバック関数の使用を余儀なくされているからです。   
+単純な順番管理であれば良いですが、例えば `fetch` で取得した値の副作用によって処理を分けたい場合、
+
+```javascript
+fetch('https://example.com/api/example')
+  .then(res => res.json())
+  .then(json => {
+    if (json.data) {
+      return new Promise(resolve => {
+        // ... some code
+      })
+    } else return Promise.reject()
+  })
+  .catch(e => console.error('Failed'))
+```
+
+のように、複雑になればなるほど無限にネストすることになるでしょう。   
+これを **コールバック地獄** と呼び、 *JavaScript* ではその可読性の低さから良く思われていません。   
+これを解決するために、 **ES2017** にて以下のような文法が策定されました。
+
+```javascript
+const asyncFunc = async () => {
+  const res = await fetch('https://example.com/api/example')
+  const json = res.json()
+  if (!json.data) return Promise.reject()
+  // ... some code
+}
+
+asyncFunc()
+```
+
+如何でしょうか？先ほどの例と比べかなりスッキリとした見た目になり、処理を追いやすくなりました。   
+よく見ると `async` `await` の記述が増えています。単純に記述できるのはこの二つの文法のおかげです。   
+この二つは互いにペアだと思っていてください。   
+まずは `async` についてですが、
+
+```javascript
+// ラムダ式の場合
+const asyncFunc = async () => {
+  // ... some code
+}
+
+// 普通の関数定義の場合
+const asyncFunc = async function () {
+  // ... some code
+}
+```
+
+このように関数を定義するときに使用します。   
+これはそんなに難しいものではありません。`async` を付けた関数は今まで通り以下のような関数と同義です。
+
+```javascript
+const asyncFunc = () => {
+  return new Promise(resolve => {
+    // ... some code
+    resolve()
+  })
+}
+```
+
+`async` を付けた関数は *Promise型* になるのです。   
+いままで *コールバック関数* によって定義しなければいけなかった処理内容を通常の関数と同じように記述できます。   
+行数にして3行省略されるだけかもしれませんが、それはあなたのコードをもっとスマートにしてくれるでしょう。   
+また、`await` についても同じく難しくありません。しかしこれは `async` の関数の中でのみ使用することができます。
+
+```javascript
+const waitOneSec = () => {
+  return new Promise(resolve => {
+    setTimeout(resolve, 1000)
+  })
+}
+
+const asyncFunc = async () => {
+  console.log('Waiting for a second...')
+  await waitOneSec()
+  console.log('Done!')
+}
+```
+
+`await` は付与された関数（もしくは *Promise型* ）の処理がおわるまで待ってねという命令です。   
+上記のサンプルコードでは `waitOneSec` 関数が1秒待ってから *Promise* 型を返しますが、それを `asyncFunc` 関数内で実行し、`await` を付与して待たせています。   
+**ただし `await` を付けられるものは *Promise型* が返ってくるものに限ります。** 
+   
+さて、4章で例に出した *Python* の以下のコードを少し思い出してみましょう。
+
+```python
+from time import sleep
+
+print('Waiting for 2 seconds.')
+sleep(2000)
+print('Done!')
+```
+
+*Python* は *非同期I/O* ではないのでコードが書かれた順番に実行されるという話をしました。   
+実は *JavaScript* でも `async/await` を使って同じようなSyntaxを再現することができます。
+
+```javascript
+// sleep関数の定義
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+const main = async () => {
+  console.log('Waiting for 2 seconds.')
+  await sleep(2000)
+  console.log('Done!')
+}
+
+main()
+```
+
+これが `async/await` の本当の力です。   
+*非同期I/O* の *JavaScript* でも今までの手続き型のような処理を簡単に記述することができます。   
+今まで `Promise` のコールバック関数を無限にネストしていたことに比べたら、大きな進歩だと思いませんか？
