@@ -1,0 +1,14 @@
+{
+  "name": "react-practice",
+  "version": "0.2.0",
+  "repository": "https://github.com/suzu2469/react-tutorial.git",
+  "author": "Souma Suzuki <subayai.kobashiri@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vuepress dev",
+    "build": "vuepress build"
+  },
+  "dependencies": {
+    "vuepress": "^0.14.2"
+  }
+}
