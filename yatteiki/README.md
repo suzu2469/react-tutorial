@@ -498,6 +498,125 @@ const genders = ['women', 'women', 'women', 'men', 'women']
 const hasMen = genders.some((gender, index) => gender === 'men')
 console.log(hasMen) // -> true
 ```
+
+
+## クラス
+*JavaScript* には`ES5` までクラスが無かったのですが、`ES6` より本格的に導入されました。   
+*React* でふんだんに使うので是非覚えていきましょう。   
+
+### クラスを作ってみる
+例として人物の情報を扱う `Person` クラスを作ってみましょう。
+
+```javascript
+class Person {
+  // コンストラクタ
+  constructor(firstName, lastName, age) {
+    // クラスメンバーには this を使ってアクセスします
+    this.firstName = firstName
+    this.lastName = lastName
+    this.age = age
+  }
+}
+```
+
+`Person` は姓, 名, 年齢の情報を持っていて、 *コンストラクタ* でそれぞれ初期化されます。   
+インスタンスにするには、 `new` を使って宣言します。
+
+```javascript
+const ichro = new Person('ichiro', 'suzuki', 44)
+ichiro.firstName // -> ichiro
+ichiro.age // -> 44
+```
+
+### ゲッターとセッター
+
+このままだとフルネームが取れなくて不便なので、`Person` に `fullName` を取れるゲッターを設定してみましょう。
+
+```javascript
+class Person {
+  // ... 省略
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`
+  }
+}
+
+const ichiro = new Person('ichiro', 'suzuki', 44)
+ichiro.fullName // -> ichiro suzuki
+```
+
+これで `fullName` からフルネームを取れるようになりました。   
+`get` を使ってメソッドを定義するとインスタンスでは変数のように扱われます。   
+但し `ReadOnly` であることに注意して下さい。
+
+```javascript
+// これはできない
+ichiro.fullName = 'Ichiro Suzuki'
+```
+
+加えて、 `set` を使ってセッターを定義することができます。   
+また、メンバー名の先頭に `_` を付けるとプライベートメンバーになります。   
+`age` が文字列の数字 `'45'` でも代入されてしまうため、以下のようにセッターを設定します。
+
+```javascript
+class Person {
+  constructor(firstName, lastName, age) {
+    this.firstName = firstName
+    this.lastName = lastName
+    this.age = age
+  }
+  // ... 省略
+  get age() {
+    return this._age
+  }
+  set age(age) {
+    // number型に直して代入する
+    this._age = parseInt(age)
+  }
+}
+
+const ichiro = new Person('ichiro', 'suzuki', 44)
+console.log(ichiro.age) // -> 44
+ichiro.age = '45'
+console.log(ichiro.age) // -> 45
+```
+
+### メソッド
+これで `age` が文字列であっても数値に直して代入することができるようになりました。   
+しかし、今の `Person` は何もしてくれないしつまらないので、自己紹介ができるようにしてみましょう。
+
+```javascript
+class Person {
+  // ... 省略
+  whoAreYou() {
+    return `僕は${this.fullName}です。年齢は${this.age}歳です。`
+  }
+}
+
+const ichiro = new Person('ichiro', 'suzuki', 44)
+console.log(ichiro.whoAreYou()) // -> 僕はichiro suzukiです。年齢は44歳です。
+```
+
+自己紹介してもらえるようになりました。この `whoAreYou()` のようなメソッドを *インスタンスメソッド* と呼びます。   
+その他に *プライベートメソッド* と *静的メソッド* があります。   
+
+```javascript
+class Person {
+  // ... 省略
+  // プライベートメソッド
+  _nextAge() {
+    return this.age + 1
+  }
+  // 静的メソッド
+  static handShake() {
+    return `🤝`
+  }
+}
+
+Person.handShake() // -> 🤝
+```
+
+*静的メソッド* はインスタンス化していないクラスから使用します。   
+
 ## 非同期 is 何
 
 ### 非同期I/O
@@ -562,6 +681,7 @@ syncFunc(function() {
 `syncFunc`の引数に関数を取り、自分の処理が終わるタイミングで実行させています。   
 そう考えると`setTimeout`の第一引数の関数も`callback`であることにお気づきでしょうか？   
 この「何か変わってから呼ぶ処理」のことを **コールバック処理** と呼びます。
+
 ## もっと非同期する
 
 ### Promise
@@ -842,3 +962,188 @@ main()
 これが `async/await` の本当の力です。   
 *非同期I/O* の *JavaScript* でも今までの手続き型のような処理を簡単に記述することができます。   
 今まで `Promise` のコールバック関数を無限にネストしていたことに比べたら、大きな進歩だと思いませんか？
+
+
+## TypeScript
+*TypeScript* は *JavaScript* に静的な型を定義できる *altJS* です。   
+
+```typescript
+const n: number = 1
+
+function double(a: number): number {
+  return a * 2
+}
+```
+
+このように関数や変数の後に `:` を付けて型を定義することが出来ます。
+
+### REPLを用意する
+*TypeScript* をサクッと試すために、REPLを用意してみましょう。   
+*npm* パッケージの *ts-node* を使用します。   
+
+```bash
+$ yarn global add ts-node
+$ ts-node -v
+$ ts-node
+>"Hello World"
+'Hello World'
+```
+
+
+
+### 型の基本 (プリミティブ型)
+TypeScriptで扱う型は主に以下です。   
+
+|定義|説明|
+|:-|:-|
+|any|何でも可|
+|number|数値|
+|string|文字列|
+|boolean|真偽値|
+|null|null値|
+|void|無|
+|undefined|undefined|
+
+これらは互いに代入不可で、途中で型を変える事はできません。
+
+```typescript
+let n: number = 1
+n = 'hoge' // ->  error: Type '"hoge"' is not assignable to type 'number'.
+```
+
+#### 配列
+```typescript
+const numbers: number[] = [1, 2, 3]
+```
+
+型の語尾に`[]`を付けるとその型の配列になります。   
+また、`[]`が使えない時は以下のような方法で作ることもできます。
+
+```typescript
+const numbers: Array<number> = [1, 2, 3]
+```
+
+#### タプル
+```typescript
+const tuple: [string, number] = ['カツ丼', 500]
+```
+
+`[]` 内で順番に型を入れると、その型のタプルを作ることができます。
+
+#### 型の後付け
+何かの型が `any` だった時、型を上書きすることができます
+
+```typescript
+const value: any = 'hello'
+
+const upperValue: string = (<string>value).toUpperCase()
+// もしくは
+const length: number = (value as string).length()
+```
+
+
+### リテラル型
+#### Type alias
+以下のようにするとプリミティブ型に別名を付けることが出来ます。
+
+```typescript
+type UserID = number
+let id: UserID
+
+id = 1
+id = 'hoge' // -> error: Type '"hoge"' is not assignable to type 'number'.
+```
+
+型に別名を付けることでコード全体の可読性を上げることができ、コンパイラにバグを見つけてもらうことができます。   
+また、`type` はオブジェクトの型を作ることもできます。
+
+```typescript
+type ShopID = number
+type ProductID = number
+
+type ProductType = {
+  id: ProductID
+  name: string
+  description: string
+  shopId: shopId
+}
+
+const product: ProductType = {
+  id: 1,
+  name: 'かばん',
+  description: '便利',
+  shopId: 3
+}
+```
+
+このオブジェクトの型内で変数名の直後に `?` を入れるとあってもなくても良いプロパティを作成できます。
+
+```typescript
+type ProductType = {
+  id: number
+  name: string
+  description?: string
+  isSale?: boolean
+}
+```
+
+#### Interface
+`type` と同じく、`interface` を使って型を作ることもできます。
+
+```typescript
+type ShopID = number
+type ProductID = number
+
+interface IProduct {
+  id: ShopID
+  name: string
+  description?: string
+  shopId: ShopID
+}
+
+const product: ProductType = {
+  id: 1,
+  name: 'かばん',
+  description: '便利',
+  shopId: 3
+}
+```
+
+また、`interface` は `extends` すると継承できます。
+
+```typescript
+interface BaseProduct {
+  id: number
+  name: string
+}
+
+interface ProductWithOptions extends BaseProduct {
+  options: string[]
+}
+
+const product: ProductWithOptions = {
+  id: 1,
+  name: 'Tシャツ',
+  options: ['S', 'M', 'L']  
+}
+```
+
+`class` と併用すると `class` の型を定義することが出来ます。   
+クラス宣言後に `implements` を記述して継承したい `interface` 名を指定します。   
+
+```typescript
+interface IProduct {
+  readonly id: number
+  name: string
+  description?: string
+}
+
+class Product implements IProduct {
+  constructor(id: number, name: string, description?: string) {
+    this.id = id
+    this.name = name
+    this.description = description || null
+  }
+}
+```
+
