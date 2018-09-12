@@ -1440,3 +1440,148 @@ Waiting for a second
 Done!
 ✨  Done in 4.15s.
 ```
+
+## Webpackと戦う
+さて、「*TypeScript* も理解したことだし、そろそろ *React* やりましょう！」と言いたいところですが、あともう一つだけお付き合いください。   
+タイトルにもある通り *Webpack* の話ですが、こいつが中々厄介でフロントエンドを難しくしている要因の一つになっています。   
+以前お話した通り *Webpack* はバンドラなわけですが、一先ず先程までやっていた *TypeScript* のコードを見てみましょう。   
+
+```bash
+$ yarn build
+$ tree ./dist
+./dist
+├── app.js
+└── sleep.js
+
+0 directories, 2 files
+```
+
+`app.js` と `sleep.js` の2つあります。   
+ご存知の通り、ブラウザーでは複数ファイルに分割した *JavaScript* を実行できません！   
+(`<script>` を使えばできないことはないですが、いずれにせよこのままでは動かせません)   
+ですので、このファイル達を一つの `.js` ファイルに纏める必要があります。   
+それをいい感じにやってくれるのが *Webpack* ということです。   
+
+### パッケージを追加する
+何はともあれやってみましょう。   
+前回に引き続き `./ts-project` を使ってやっていきます。   
+まずは *Webpack* のパッケージを追加しましょう。
+
+```bash
+$ yarn add --dev webpack webpack-cli
+```
+
+`webpack` が実際にバンドルしてくれるコアライブラリで、`webpack-cli` はそれを実行するためのコマンドラインツールです。   
+次に、`webpack` に `.ts` ファイルを読み込ませるため *Loader* というものを追加します。
+
+```bash
+$ yarn add --dev ts-loader
+```
+
+### 設定ファイルを作る
+`webpack` がどのようにバンドルするかを決める設定ファイルを作ります。   
+
+```javascript
+// ./webpack.config.js
+const path = require('path')
+
+module.exports = {
+  // 読み込むファイルの設定
+  entry: './src/app.ts',
+  output: {
+    // 書き出すファイルの設定
+    filename: 'app.js',
+    path: path.resolve(__dirname, 'dist')
+  }
+}
+```
+
+（`path` は `node` の標準パッケージで、`require` は `import` と似たようなものです）
+これで `./src/app.ts` を読み込んで、`./dist/app.js` として書き出してくれるようになります。   
+普通はこれでOKなのですが、今回は *TypeScript* を使っているため *Loader* の設定が必要です。
+
+```javascript
+// ./webpack.config.js
+const path = require('path')
+
+module.exports = {
+  // 読み込むファイルの設定
+  entry: './src/app.ts',
+  output: {
+    // 書き出すファイルの設定
+    filename: 'app.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  // .ts 等を省略する設定
+  resolve: {
+    extensions: ['.ts', '.js']
+  },
+  // Loaderの設定
+  module: {
+    rules: [
+      {
+        test: /\.ts?$/, // Loaderを適用したいファイルを正規表現で指定します
+        use: 'ts-loader', // 何のLoaderを使うか指定
+        exclude: /node_modules/ // Loaderから除外するフォルダーをしています
+      }
+    ]
+  }
+}
+```
+
+*Loader* を指定して `.ts` ファイルを `webpack` が扱える様になったので、いよいよバンドルしてみましょう。
+
+```bash
+$ rm -rf dist
+$ yarn exec webpack
+yarn exec v1.7.0
+Hash: 021a04d1575ddeb2e461
+Version: webpack 4.18.0
+Time: 1535ms
+Built at: ****-**-** **:**:**
+ Asset      Size  Chunks             Chunk Names
+app.js  2.83 KiB       0  [emitted]  main
+Entrypoint main = app.js
+[0] ./src/app.ts 3.08 KiB {0} [built]
+[1] ./src/sleep.ts 344 bytes {0} [built]
+
+WARNING in configuration
+The 'mode' option has not been set, webpack willfallback to 'production' for this value. Set 'mode' option to 'development' or 'production' to enable defaults for each environment.
+You can also set it to 'none' to disable any default behavior. Learn more: https://webpack.js.org/concepts/mode/
+```
+
+このような感じになればOKです。   
+出力されたファイルは
+
+```bash
+$ tree dist
+dist
+└── app.js
+
+0 directories, 1 file
+```
+
+`app.js` のみになりました！これでブラウザで使用することができます。
+
+### Webpackの何がダメなのか
+さて、*Webpack* で `.ts` ファイルをバンドルすることができました。   
+「普通に楽勝だったし、何がフロントを複雑にしている要因なんだ？」と思いますよね。   
+実はまだ 1/5 くらいしか完了していません。   
+このセクションではもうやりませんが、思いつくだけでもあと以下をやる必要があります。
+
+- `css-loader` と `style-loader` と併せてプリプロセッサ用の `sass-loader` とかを設定する
+- *HTML* ファイルを自動出力するために `html-webpack-plugin` を設定する
+- 画像は `file-loader` で指定のフォルダ(`./dist/assets/img`とか)に出力する
+- 本番環境用にファイルを軽くするため、*Split Chunks* や *Tree Shaking* を利用する
+- 本番環境でキャッシュの影響を受けないように、`.js`ファイルに *Hash* を付ける
+- *IE11* じゃ動かないので `babel` `babel-loader` を設定して、エントリーポイントに `core-js` を入れる
+
+と、やることが盛り沢山です。   
+この「フロントする上での最低ライン」を整えるだけで、設定ファイルがかなり肥大化し複雑になります。   
+しかも環境構築なのに時間がかかりすぎるので、ダメなのです。   
+
+### 他の選択肢
+*Webpack* はとにかく大変なので、サクッとなにか作るには [Parcel](https://parceljs.org/) を使うのが良いと思います。   
+「ゼロコンフィグ」を掲げていて、何も設定しなくても *TypeScript* や *Sass* などを勝手にバンドルしてくれます。   
+但し、細やかな設定は苦手なので実際のプロダクトでは *Webpack* が使われることがほとんどです。   
+使ってみたい人は公式ドキュメントを見て是非試してみて下さい。   
