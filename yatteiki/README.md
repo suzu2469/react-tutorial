@@ -1147,3 +1147,296 @@ class Product implements IProduct {
 }
 ```
 
+### TypeScriptのトランスパイル
+*TypeScript* は *JavaScript* の実行環境では動きません。   
+`ts-node` を使って例外的に実行できていましたが、基本は `.ts` ファイルを `.js` ファイルにトランスパイルして使うものです。   
+実際に *TypeScript* のプロジェクトを作ってみて、どうやってトランスパイルしていくか学んでいきましょう。   
+
+
+#### プロジェクトを作る
+```bash
+# お好きな場所にフォルダを作って下さい
+$ mkdir ./ts-project
+$ cd ./ts-project
+
+# ./package.json を作成します
+$ yarn init -y
+
+# TypeScript のトランスパイラを追加します (本番環境では使用しないのでdevDependenciesに追加します)
+$ yarn add --dev typescript
+```
+
+プロジェクトに `typescript` パッケージを追加できました！   
+
+#### TypeScriptの設定
+次に `typescript` で使用する設定を決めていきます。   
+`./tsconfig.json` を作って、一先ず以下のように入れてみましょう。
+
+```json
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  }
+}
+```
+
+`tsconfig.json` には他にもたくさんのオプションを指定することができますが、上記の例だけ記載しておけば大抵動くと思います（多分）   
+もっと詳しく`tsconfig.json`の設定を知るには、[この記事](https://qiita.com/shora_kujira16/items/73ccf53a5ecfef8f07c1)が参考になります。   
+#### トランスパイルしてみる
+
+ということで初めの一歩をやってみましょう！まずは `./app.ts` を作って、その中に下記のコードを記載します。
+
+```typescript
+const a: number = 1
+
+console.log(a + 2)
+```
+
+この `./app.ts` をトランスパイルしてみましょう！
+
+```bash
+$ yarn exec tsc ./app.ts
+```
+
+するとプロジェクトフォルダに `./app.js` が作られていると思います。   
+中身を確認すると、しっかりトランスパイルされていることがわかるでしょうか？   
+
+```javascript
+var a = 1;
+console.log(a + 2);
+```
+
+もちろん `node` で実行できます！
+
+```bash
+$ node ./app.js
+3
+```
+
+`./app.ts` をトランスパイルして実行することができました。   
+
+#### プロジェクトを整える
+しかし、プロジェクトフォルダに出力されるのは分かりづらいので、   
+
+- `.ts` を `./src` へ   
+- `.js` を `./dist` へ    
+
+置くように設定します。   
+(フォルダの名前は何でも良いですが、デファクトでそうすることが多いです)   
+`tsconfig.json` を編集してみましょう。   
+
+```json
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  }
+}
+```
+
+`app.ts` を `./src` に移動します。   
+
+```bash
+$ rm -rf ./app.js
+$ mkdir src
+$ mv ./app.ts ./src/
+```
+
+トランスパイルを実行します。
+
+```bash
+$ yarn exec tsc
+$ tree dist
+dist
+└── app.js
+
+0 directories, 1 file
+```
+
+無事 `./src` の中の `.ts` ファイルを `./dist` へトランスパイルすることができました！   
+ところで、一々 `yarn exec` するのは面倒なので、 `npm scripts` に登録してしまいしょう。   
+
+```./package.json
+{
+  "name": "ts-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/app.js"
+  },
+  "devDependencies": {
+    "typescript": "^3.0.3"
+  }
+}
+
+```
+
+`yarn build` でトランスパイルして、 `yarn start` で実行できるようにしました。   
+実際にやってみます。
+
+```bash
+$ yarn build
+yarn run v1.7.0
+$ tsc
+✨  Done in 1.49s.
+
+$ yarn start
+yarn run v1.7.0
+$ node ./dist/app.js
+3
+✨  Done in 0.14s.
+```
+
+これ以降で出てくる例を実行する際は `yarn build` `yarn start` の順に実行すればOKです。   
+それが面倒な場合は `ts-node ./src/app.ts` として頂いてもOKです！
+
+### importとexport
+#### export default
+*TypeScript* と一部の *JavaScript* では、コードを複数ファイルに分割し再利用することができます。   
+例として、非同期の話のときに出てきた `sleep` 関数を実装したファイルを作ってみましょう。   
+
+```typescript
+// ./src/sleep.ts
+const sleep = ms => {
+  return new Promise(resolve => {
+    setTimeout{resolve, ms}
+  })
+}
+```
+
+さて、この関数をメインとなる `app.ts` の中で使っていきたいわけですが、このままでは使えません。   
+正しく使用するためにまず `sleep` 関数を外部で使用可能であると宣言します。
+
+```typescript
+// ./src/sleep.ts
+const sleep = ms => {
+  return new Promise(resolve => {
+    setTimeout{resolve, ms}
+  })
+}
+
+export default sleep
+```
+
+`export default` の後に `sleep` を置くことによって、「このファイルは `sleep` 関数を標準で出力します」と宣言することができます。   
+実際に `app.ts` で読み込むには以下のようにします。(`app.ts`の中身は空にしておきました)
+
+```typescript
+// ./src/app.ts
+import sleep from './sleep'
+```
+
+`import` の後に読み込んだ物の名前（自由です）を決め、`from` の後にどこから読み込むかを書きます（拡張子は省略可能）   
+実際に `sleep` を使う処理を記述して実行してみましょう！
+
+```typescript
+// ./src/app.ts
+import sleep from './sleep'
+
+const main = async () => {
+  console.log('Waiting...')
+  await sleep(3000)
+  console.log('Done!')
+}
+
+main()
+```
+
+```bash
+$ yarn build
+$ yarn start
+yarn run v1.7.0
+$ node ./dist/app.js
+Waiting...
+Done!
+✨  Done in 3.15s.
+```
+
+#### deafult しない
+`export default` は `default` 抜きでも使うことができます。   
+例として1秒待つだけの `sleepOneSec` を実装してみましょう。
+
+```typescript
+// ./src/sleep.ts
+const sleep = ms => {
+// ...省略
+}
+
+export const sleepOneSec = () => {
+  return new Promise(resolve => {
+    setTimeout(resolve, 1000)
+  })
+}
+
+export default sleep
+
+```
+
+既に `export default` は使用されているので、 `default` 抜きで `export` しています。   
+この場合 `import` する際は以下のように工夫が必要です。
+
+```typescript
+// ./src/app.ts
+import sleep from './sleep'
+import { sleepOneSec } from './sleep'
+```
+
+`{}` を使って `import` していますが、`default` の時と違い名前は `export` した時と同じにしなければいけません。   
+また、`from` が被っている場合 `,` を使用して複数 `import` することができます。
+
+```typescript
+// ./src/app.ts
+import sleep, { sleepOneSec } from './sleep'
+```
+
+さらに、`{}` の中では `as` を使って別名で宣言することが可能です。
+
+```typescript
+import sleep, { sleepOneSec as soc } from './sleep'
+
+// 別名で宣言される
+soc()
+```
+
+ということで、`app.ts` を以下のようにしてみましょう！
+
+```typescript
+// ./src/app.ts
+import sleep, { sleepOneSec } from './sleep'
+
+const main = async () => {
+  console.log('Waiting...')
+  await sleep(3000)
+  console.log('Done!')
+  console.log('Waiting for a second')
+  await sleepOneSec()
+  console.log('Done!')
+}
+
+main()
+```
+
+```bash
+$ yarn build
+$ yarn start
+yarn run v1.7.0
+$ node ./dist/app.js
+Waiting...
+Done!
+Waiting for a second
+Done!
+✨  Done in 4.15s.
+```
