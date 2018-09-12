@@ -5,7 +5,8 @@
   "author": "Souma Suzuki <subayai.kobashiri@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "vuepress dev"
+    "dev": "vuepress dev",
+    "build": "vuepress build"
   },
   "dependencies": {
     "vuepress": "^0.14.2"
