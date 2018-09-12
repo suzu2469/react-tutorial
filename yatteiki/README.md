@@ -1,4 +1,5 @@
 # やっていき
+結構適当言ってるので、マサカリは[Github](https://github.com/suzu2469/react-tutorial)のIssueから飛ばして下さい。
 ## 何をやるのか
 - 目標 -> 1ヶ月でゆるいSPAを作る
 - やること
