@@ -103,6 +103,7 @@ $ yarn global add PACKAGE_NAME
 
 ### Hello World!
 ```javascript
+// ./hello.js
 // 文字列を代入
 const message = 'Hello World!'
 // 標準出力
@@ -641,7 +642,6 @@ print("Done!")
 ### 実行タイミングのズレ
 *非同期I/O* は「処理を後回しにする」と言いました。   
 では以下のようなソースはどのように処理されるでしょうか？   
-`./lazyYo.js`を実際に実行してみましょう。   
 `setTimeout`関数は第二引数ミリ秒後に第一引数の関数を実行するものです。
 ```javascript
 // この関数は実行に1秒かかります
@@ -655,8 +655,8 @@ console.log('Hey')
 syncFunc()
 console.log('Check it out!')
 ```
+
 ```bash
-$ node ./lazyYo.js
 Hey
 Check it out!
 Yo
