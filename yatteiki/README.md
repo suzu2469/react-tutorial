@@ -627,7 +627,7 @@ Person.handShake() // -> 🤝
 ```python
 from time import sleep
 
-print("Waiting 2 seconds.")
+print("Waiting for 2 seconds.")
 sleep(2000)
 print("Done!")
 ```
@@ -727,7 +727,6 @@ const stepOne = () => {
 const stepTwo = () => {
   setTimeout(() => {
     console.log('3 sec')
-    resolve()
   }, 2000)
 }
 
@@ -739,7 +738,7 @@ stepOne().then(() => stepTwo())
 `stepOne().then()` とは何か？についてはこれから詳しく解説しますが、とにかくこのサンプルコードを実行して何が起こっているのか少し考えてみてください。
 
 #### Promiseをもっと理解する
-`Promise` は直訳すると「約束する・保証する」などの意味になりますが、 *JavaScript* では「処理が終わったかどうかを管。理。するオブジェクト」という意味合いが近いかもしれません。   
+`Promise` は直訳すると「約束する・保証する」などの意味になりますが、 *JavaScript* では「処理が終わったかどうかを管理。するオブジェクト」という意味合いが近いかもしれません。   
 まず `new Promise` で作られた `Promise` インスタンスは、以下のような特性があります。
 
 ```javascript
@@ -1133,7 +1132,7 @@ const product: ProductWithOptions = {
 
 ```typescript
 interface IProduct {
-  readonly id: number
+  id: number
   name: string
   description?: string
 }
