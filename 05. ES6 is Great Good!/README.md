@@ -171,3 +171,117 @@ const genders = ['women', 'women', 'women', 'men', 'women']
 const hasMen = genders.some((gender, index) => gender === 'men')
 console.log(hasMen) // -> true
 ```
+
+# クラス
+*JavaScript* には`ES5` までクラスが無かったのですが、`ES6` より本格的に導入されました。   
+*React* でふんだんに使うので是非覚えていきましょう。   
+
+## クラスを作ってみる
+例として人物の情報を扱う `Person` クラスを作ってみましょう。
+
+```javascript
+class Person {
+  // コンストラクタ
+  constructor(firstName, lastName, age) {
+    // クラスメンバーには this を使ってアクセスします
+    this.firstName = firstName
+    this.lastName = lastName
+    this.age = age
+  }
+}
+```
+
+`Person` は姓, 名, 年齢の情報を持っていて、 *コンストラクタ* でそれぞれ初期化されます。   
+インスタンスにするには、 `new` を使って宣言します。
+
+```javascript
+const ichro = new Person('ichiro', 'suzuki', 44)
+ichiro.firstName // -> ichiro
+ichiro.age // -> 44
+```
+
+このままだとフルネームが取れなくて不便なので、`Person` に `fullName` を取れるゲッターを設定してみましょう。
+
+```javascript
+class Person {
+  // ... 省略
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`
+  }
+}
+
+const ichiro = new Person('ichiro', 'suzuki', 44)
+ichiro.fullName // -> ichiro suzuki
+```
+
+これで `fullName` からフルネームを取れるようになりました。   
+`get` を使ってメソッドを定義するとインスタンスでは変数のように扱われます。   
+但し `ReadOnly` であることに注意して下さい。
+
+```javascript
+// これはできない
+ichiro.fullName = 'Ichiro Suzuki'
+```
+
+加えて、 `set` を使ってセッターを定義することができます。   
+また、メンバー名の先頭に `_` を付けるとプライベートメンバーになります。   
+`age` が文字列の数字 `'45'` でも代入されてしまうため、以下のようにセッターを設定します。
+
+```javascript
+class Person {
+  constructor(firstName, lastName, age) {
+    this.firstName = firstName
+    this.lastName = lastName
+    this.age = age
+  }
+  // ... 省略
+  get age() {
+    return this._age
+  }
+  set age(age) {
+    // number型に直して代入する
+    this._age = parseInt(age)
+  }
+}
+
+const ichiro = new Person('ichiro', 'suzuki', 44)
+console.log(ichiro.age) // -> 44
+ichiro.age = '45'
+console.log(ichiro.age) // -> 45
+```
+
+これで `age` が文字列であっても数値に直して代入することができるようになりました。   
+しかし、今の `Person` は何もしてくれないしつまらないので、自己紹介ができるようにしてみましょう。
+
+```javascript
+class Person {
+  // ... 省略
+  whoAreYou() {
+    return `僕は${this.fullName}です。年齢は${this.age}歳です。`
+  }
+}
+
+const ichiro = new Person('ichiro', 'suzuki', 44)
+console.log(ichiro.whoAreYou()) // -> 僕はichiro suzukiです。年齢は44歳です。
+```
+
+自己紹介してもらえるようになりました。この `whoAreYou()` のようなメソッドを *インスタンスメソッド* と呼びます。   
+その他に *プライベートメソッド* と *静的メソッド* があります。   
+
+```javascript
+class Person {
+  // ... 省略
+  // プライベートメソッド
+  _nextAge() {
+    return this.age + 1
+  }
+  // 静的メソッド
+  static handShake() {
+    return `🤝`
+  }
+}
+
+Person.handShake() // -> 🤝
+```
+
+*静的メソッド* はインスタンス化していないクラスから使用します。   
