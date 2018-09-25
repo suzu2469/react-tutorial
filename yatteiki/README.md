@@ -1958,7 +1958,7 @@ src/components/RedText
 
 ```tsx
 // ./src/components/RedText/index.tsx
-import { SFC } from 'react'
+import * as React from 'react'
 import style from './style.css'
 
 const Component: SFC = () => (
