@@ -1589,3 +1589,467 @@ dist
 「ゼロコンフィグ」を掲げていて、何も設定しなくても *TypeScript* や *Sass* などを勝手にバンドルしてくれます。   
 但し、細やかな設定は苦手なので実際のプロダクトでは *Webpack* が使われることがほとんどです。   
 使ってみたい人は公式ドキュメントを見て是非試してみて下さい。   
+
+## いよいよReact
+ここまでお疲れ様でした。   
+長かったですがこれから本命の *React* をやっていきましょう。   
+とはいえいきなり大きなアプリケーションを作るのは難しいので、 *React* も段階を踏んで少しずつ学べるように書いていこうと思います。
+
+### 0から始める
+まずは *React* を快適に書けるように、プロジェクトをセットアップしていきます。   
+お好きな場所にからのディレクトリを作って *TypeScript* *Webpack* *React* をインストールしていきます。   
+
+```bash
+$ mkdir react-ts-firstapp
+$ cd react-ts-firstapp
+$ yarn init -y
+
+# 開発時にしか使わないので DevDependencies に追加する
+$ yarn add --dev typescript webpack webpack-cli ts-loader
+
+# VSCodeで型を保管してもらうためのパッケージ
+$ yarn add --dev @types/react @types/react-dom
+
+# Reactの基本パッケージと DOMにレンダリングするパッケージ
+$ yarn add react react-dom
+```
+
+次に、*TypeScript* を使うための `./tsconfig.json` を作ります。
+
+```json
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "baseUrl": "src",
+    "outDir": "dist",
+    "jsx": "react",
+    "lib": [
+      "es2017",
+      "dom"
+    ]
+  }
+}
+```
+
+`"jsx": "react"` オプションを指定することで *TypeScript* 上で *React* が使えるようになります！忘れがちなので覚えておいて下さい。   
+次に *Webpack* でバンドルするための `./webpack.config.js` を設定します。   
+
+```javascript
+const path = require('path')
+
+module.exports = {
+  // React(厳密にはJSX)を使う時は拡張子を 'tsx' にします
+  entry: './src/index.tsx',
+  output: {
+    filename: 'app.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js']
+  },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader'
+      }
+    ]
+  }
+}
+```
+
+*JSX* の話は後ほどお話しますが、*React* を使う時は拡張子に 'x' をつける必要があります。   
+*JavaScript* だったら 'jsx' に、*TypeScript* だったら 'tsx' という具合です。  
+
+あとは、*Webpack* を簡単に実行できるように `NPM Scripts` を作って終わりです。   
+
+```json
+{
+  "name": "react-ts-firstapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack -p"
+  },
+  "devDependencies": {
+    "@types/react": "^16.4.14",
+    "@types/react-dom": "^16.0.7",
+    "ts-loader": "^5.1.1",
+    "typescript": "^3.0.3",
+    "webpack": "^4.19.0",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "react": "^16.5.1",
+    "react-dom": "^16.5.1"
+  }
+}
+
+```
+
+### 初めてのReact
+さて、このままでは*React* を書いてもレンダリングするHTMLがありませんので、以下のようなHTMLファイル `./index.html` を作ります。   
+
+```html
+<!-- ./index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello React!</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="./dist/app.js"></script>
+  </body>
+</html>
+```
+
+`<div id="app"></div>` の中に *React* でレンダリングしていきます！   
+*Webpack* でバンドルされたファイルは `./dist/app.js` フォルダに出力されるので、併せてそのファイルも読み込むように記述しておきます。   
+   
+次は *Webpack* が一番最初に読み込むファイル `./src/index.tsx` を作ります。   
+
+```typescript
+// ./src/index.tsx
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
+
+// Reactのコンポーネントをインポートする
+import App from './App'
+
+// ReactDOM.render() でHTML要素をレンダリングする
+ReactDOM.render(<App />, document.querySelector('#app'))
+```
+
+`ReactDOM.render()` は第一引数に「レンダリングする中身」を、第二引数に「レンダリング先」を指定します。   
+この「レンダリングする中身」もとい *React* では **コンポーネント** という単位で管理しますが、   
+`./App.tsx` はまだ作っていないので以下のように作成します。   
+※ *コンポーネント* については後ほど詳しく説明します。
+
+```tsx
+// ./src/App.tsx
+import * as React from 'react'
+
+const App: React.SFC = props => (
+  <div>Hello World!</div>
+)
+
+export default App
+```
+
+これが *コンポーネント* となって、 `index.tsx` によってHTMLファイルにレンダリングしています。   
+では実際にビルドして動かしてみましょう！   
+
+```bash
+$ yarn build
+$ tree dist
+dist
+└── app.js
+```
+
+`index.html` をブラウザーで開くと、「Hello World!」が表示されます！   
+
+<img src="/assets/img/yatteiki/react_hello_world.png" />
+
+### 開発をもっと便利にする
+今 `yarn build` して動作を確認していますが、これでは毎度毎度実行するのは面倒です。   
+ですので、 `webpack-serve` を導入して便利にしましょう。   
+これで開発用のローカルサーバーを建ててくれたり、ファイルを更新するとブラウザを勝手にリロードしてくれたりします。
+
+```bash
+$ yarn add --dev webpack-serve
+```
+
+これも *NPM Scripts* に登録してしまいます。
+
+```json
+{
+  "name": "react-ts-firstapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack-serve"
+  },
+  "devDependencies": {
+    "@types/react": "^16.4.14",
+    "@types/react-dom": "^16.0.7",
+    "ts-loader": "^5.1.1",
+    "typescript": "^3.0.3",
+    "webpack": "^4.19.0",
+    "webpack-cli": "^3.1.0",
+    "webpack-serve": "^2.0.2"
+  },
+  "dependencies": {
+    "react": "^16.5.1",
+    "react-dom": "^16.5.1"
+  }
+}
+```
+
+`yarn dev` から `webpack-serve` を呼び出せるようになりました。実際に実行してみましょう。   
+
+```bash
+$ yarn dev
+yarn run v1.9.4
+$ webpack-serve
+ℹ ｢hot｣: WebSocket Server Listening on localhost:63584
+ℹ ｢hot｣: Applying DefinePlugin:__hotClientOptions__
+ℹ ｢hot｣: webpack: Compiling...
+ℹ ｢serve｣: Serving Static Content from: /
+ℹ ｢serve｣: Project is running at http://localhost:8080
+ℹ ｢serve｣: Server URI copied to clipboard
+ℹ ｢hot｣: webpack: Compiling Done
+⚠ ｢wdm｣: Hash: 3f47c1ec4dc74eed06b9
+Version: webpack 4.19.0
+Time: 3415ms
+Built at: ****-**-** **:**
+ Asset     Size  Chunks             Chunk Names
+app.js  179 KiB       0  [emitted]  main
+Entrypoint main = app.js
+# ...などなど
+```
+
+[http://localhost:8080](http://localhost:8080)にアクセスすると、先程の「Hello World!」が表示されると思います。   
+
+しかし、これではHTMLファイルを *Webpack* 側が認識していないので *Hot Reload* の恩恵が受けれません。   
+ですので *HTMLWebpackPlugin* を使って *Webpack* に `index.html` を認識させます。   
+
+```bash
+$ yarn add --dev html-webpack-plugin
+
+# ./index.html は ./src に移動しておきます
+$ mv index.html ./src
+```
+
+*HTMLWebpackPlugin* を使用するために、`webpack.config.js` を追記します。
+
+```javascript
+const path = require('path')
+const HTMLPlugin = require('html-webpack-plugin')
+
+module.exports = {
+  entry: './src/index.tsx',
+  output: {
+    filename: 'app.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js']
+  },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader'
+      }
+    ]
+  },
+  plugins: [
+    new HTMLPlugin({
+      template: './src/index.html'
+    })
+  ]
+}
+```
+
+また、 *HTMLWebpackPlugin* では `./app.js` を使用する `<script>` タグが自動挿入されるので、   
+今記載しているタグを消しておきます。
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello React!</title>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
+```
+
+これで準備完了です。 `yarn dev` を起動してみて下さい。   
+`./App.tsx` を適当に変更すると、ブラウザーをリロードしなくても更新されることがわかります。   
+
+<img src="/assets/img/yatteiki/hot_reload_demo.gif" />
+
+### JSXとVirtualDOM
+#### JSX?
+さて、先程JSファイル内で出てきた `<div></div>` は何だったのでしょうか？   
+そもそも *HTML* ファイルでもないのに *HTML* を書くのは違和感を感じられると思います。   
+これは **JSX** と呼ばれる決まりによって可能になっているもので、   
+`jsx`や`tsx`ファイル内では特別に *HTML* を書くことができるのです。
+
+```jsx
+const jsx = () => (
+  <div>This is JSX!</div>
+)
+```
+
+*JSX* を書く時はいくつかの決まりがあります。   
+
+##### 要素全体は`()`使用して囲む
+
+```jsx
+// Good
+const jsx = () => (
+  <div>This is JSX Element!</div>
+)
+
+// Bad
+const jsx = () => '
+  <div>This is string type</div>
+'
+```
+
+##### 全体は必ず1つの要素でなければならない
+
+```jsx
+// Good
+const jsx = () => (
+  <ul>
+    <li>いか</li>
+    <li>あじ</li>
+    <li>かんぱち</li>
+    <li>さば</li>
+  </ul>
+)
+// Bad
+const jsx = () => (
+  <li>いか</li>
+  <li>あじ</li>
+  <li>かんぱち</li>
+  <li>さば</li>
+)
+```
+
+##### いつものAttributeと若干違う
+
+```jsx
+const jsx = () => (
+  <div className="element__color-red">Red!</div>
+)
+```
+
+#### VirtualDOM?
+これらの *JSX* は時に **VirtualDOM** または **仮想DOM** と呼ばれることがありますが、広義で言えば一緒だと思って頂いて結構です。   
+どちらかと言うと *JSX* は記法を表し、*VirtualDOM* は *JSX* を用いた効率的なレンダリング手法のことを指すことが多いです。   
+   
+**仮想DOM** は簡単に言うと *HTML* を予め *JavaScript* ファイル内に持っておいて、それをユーザのインタラクションに合わせて出し分けるための手法です。   
+そしてこの *仮想DOM* が注目されている理由の1つとして、**レンダリングの速さ** にあります。   
+ここでは詳しく解説しませんが、[@mizchi](https://twitter.com/mizchi)さんが執筆された[WEB+DB PRESS Vol.106](https://gihyo.jp/magazine/wdpress/archive/2018/vol106)の「仮想DOM革命」にわかりやすく書いてありますので、中はどう動いているのか詳しく知りたい方はそちらをご覧ください（丸投げ）
+
+### コンポーネント指向
+#### 基本のReact
+*JSX* は *JavaScript* に書けますよと説明しましたが、ここに *CSS* を追加することができます。   
+一般的な *React* は以下のようにディレクトリを切って `.css` ファイルを個別に作ります。   
+
+```bash
+$ tree src/components/RedText
+src/components/RedText
+├── index.tsx
+└── style.css
+```
+
+```tsx
+// ./src/components/RedText/index.tsx
+import { SFC } from 'react'
+import style from './style.css'
+
+const Component: SFC = () => (
+  <div className={style.red}>Red!</div>
+)
+```
+
+```css
+/* ./src/components/RedText/style.css */
+.red {
+  color: red;
+}
+```
+
+これにより、ディレクトリ毎に様々な *HTML*, *CSS*, *JS* を管理することができているのにお気づきでしょうか？   
+このような手法を **コンポーネント指向** と呼びます。   
+*React* ではこの *コンポーネント* をたくさん作って構築していくことになります。   
+   
+イメージはこのような感じです。   
+
+```
+src/
+├── App.tsx
+├── index.html
+├── index.tsx
+└── components
+    ├── Card
+    │   ├── style.css
+    │   └── index.tsx
+    ├── Button
+    │   ├── style.css
+    │   └── index.tsx
+```
+
+#### styled-components
+しかし、上記のような例でたくさんのコンポーネントを作っていった場合、`index.tsx` と `style.css` をコンポーネント毎に作っていく必要があります。   
+これでは若干不便ですし、*CSS* も全てグローバルスコープとなるため安全な作り方とは言えません。   
+そこで今回は、CSS付きの `JSX` を自動で生成してくれる `styled-components` というライブラリを使用していきます。   
+
+```bash
+$ yarn add styled-components
+```
+
+*npm* から追加したら、`App.tsx` を以下のように書き換えてみましょう。   
+
+```tsx
+import * as React from 'react'
+import styled from 'styled-components'
+
+const App: React.SFC = props => (
+  <RedText>Hello My first App!</RedText>
+)
+
+const RedText = styled.div`
+  color: red;
+`
+
+export default App
+```
+
+これで `App.tsx` 内に *CSS* を記述できるようになり、`style.css` を無くすことができました！   
+更に `styled-components` によって書かれた *CSS* は *Scoped CSS* となり、**他のコンポーネント及びスタイルに影響することはありません。**   
+`styled-components` は一般的に以下のように記述することができます。   
+
+```tsx
+// 変数に代入する
+// styled.div は styled.ul や styled.li のようにしてもOK
+const RedText = styled.div`
+  /* ここにCSSを記述する */
+  color: red; 
+
+  /* SCSSのように & を使って記述することができます
+  & > a {
+    color: inherit;
+    text-decoration: none;
+  }
+`
+
+// コンポーネントは styled() を使って継承することができます
+// ただし、使用するコンポーネントで `className` を親要素に設定している必要があります
+const UserCard = styled(Card)`
+  position: relative;
+  padding: 16px;
+  &::after {
+    positon: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background-color: #e5e5e5;
+  }
+`
+```
+
