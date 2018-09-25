@@ -1520,7 +1520,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.ts?$/, // Loaderを適用したいファイルを正規表現で指定します
+        test: /\.tsx?$/, // Loaderを適用したいファイルを正規表現で指定します
         use: 'ts-loader', // 何のLoaderを使うか指定
         exclude: /node_modules/ // Loaderから除外するフォルダーをしています
       }
@@ -1529,7 +1529,7 @@ module.exports = {
 }
 ```
 
-*Loader* を指定して `.ts` ファイルを `webpack` が扱える様になったので、いよいよバンドルしてみましょう。
+*Loader* を指定して `.tsx` ファイルを `webpack` が扱える様になったので、いよいよバンドルしてみましょう。
 
 ```bash
 $ rm -rf dist
