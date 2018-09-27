@@ -2053,3 +2053,633 @@ const UserCard = styled(Card)`
 `
 ```
 
+## TODOアプリを作ろう
+前項では *React* の基本をざっとお教えしましたので、今回はより実践的にTODOアプリを作ってみましょう。   
+まずは、[こちら](https://react-todo.suzurin.me)で完成品を公開していますので触ってみて下さい。
+
+### 準備
+では早速、プロジェクトフォルダを準備しましょう。   
+ここでは前項のサンプルをそのまま使うことにします。
+フォルダ階層は以下のようになります。
+
+```bash
+$ tree -I node_modules
+.
+├── package.json
+├── src
+│   ├── App.tsx
+│   ├── index.html
+│   └── index.tsx
+├── tsconfig.json
+├── webpack.config.js
+└── yarn.lock
+```
+
+後々便利なので、このプロジェクト全体で使う色情報を置いておくファイルを作ります。
+
+```bash
+$ mkdir ./src/constants
+$ touch ./src/constants/colors.tsx
+```
+
+```typescript
+export default {
+  primary: '#3949AB'
+}
+```
+
+### コンポーネントを作る
+それでは細かくコンポーネントを作って行きましょう。   
+まずは基本的な `Button` コンポーネントを作ります
+
+```tsx
+// ./src/Button.tsx
+import * as React from 'react'
+import styled from 'styled-components'
+import colors from '../constants/colors'
+
+type Props = {
+  onClick?: (e: React.MouseEvent) => void
+}
+
+const Button: React.SFC<Props> = ({ children, ...props }) => (
+  <Wrap {...props}>{children}</Wrap>
+)
+
+const Wrap = styled.button`
+  border-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid ${colors.primary};
+  font-size: 16px;
+  height: 32px;
+  padding: 0 16px;
+  cursor: pointer;
+  color: ${colors.primary};
+
+  transition: 0.08s;
+  &:hover {
+    background-color: ${colors.primary};
+    color: white;
+  }
+`
+
+export default Button
+```
+
+さて、新しく `Props` というものが出てきました。これな何でしょうか？
+
+### Props
+*React* のコンポーネントでは外部から値を受け取ることができます。   
+例えば以下のようなコンポーネントは…
+
+```tsx
+const CountText: React.SFC<{ count: number }> = (props) => (
+  <div>{props.count}</div>
+)
+```
+
+外部から `count` という値を受け取って、引数の `props` から `count` にアクセスし表示させています。   
+このコンポーネントを使う時は、
+
+```tsx
+const ParentComponent: React.SFC = () => (
+  <div>
+    <CountText count="3" />
+  </div>
+)
+```
+
+親コンポーネントから *Attribute* として記述することができます。   
+
+#### Children
+`React.SFC` では、標準で `children` の `props` が使えるようになっています。
+
+```tsx
+const Heading: React.SFC = (props) => {
+  <h1>{children}</h1>
+}
+
+const ParentComponent: React.SFC = () => {
+  <Heading>Hello World!</Heding>
+}
+```
+
+このように、 `children` を使用するとタグ内に記述された *JSX* またはテキストにアクセスすることが可能です。
+   
+#### 関数のProps
+また、少し応用的な使い方として `props` に関数を渡すことができます。   
+
+```tsx
+const Button: React.SFC<{ onClick: () => void }> = (props) => (
+  <div onCLick={() => props.onClick()}>Click Me!</div>
+)
+```
+
+例えばこのように、子コンポーネント上で `onClick` を定義しておいてから、
+
+```tsx
+const ParentComponent: React.SFC = () => (
+  <div>
+    <Button onClick={() => console.log('Button is clicked!')} />
+  </div>
+)
+```
+
+親コンポーネントにその関数の内容を定義することができます。   
+これにより子コンポーネントはイベント発火のタイミングだけ定義しておいて、その実行内容は親コンポーネントで定義することが可能です。   
+このテクニックはよく使うので覚えておいて下さい。
+
+### 続・コンポーネントを作る
+#### Button
+話を戻して、 `Button` コンポーネントの `props` はこの様になっていました。   
+
+```tsx
+type Props = {
+  onClick?: (e: React.MouseEvent) => void
+}
+
+const Button: React.SFC<Props> = ({ children, ...props }) => (
+  <Wrap {...props}>{children}</Wrap>
+)
+```
+
+まず `type Props` は `Props` の型定義をしています。   
+`onClick` でクリックイベントを受け取れるようにしている、シンプルな `Props` です。   
+   
+`React.SFC<Props>` で定義した `Props` を使用することを宣言しています。   
+引数では `({ children, ...props })` とし、`children` とその他の `Props` として `...props` で代入しています。   
+
+`<Wrap {...props}>{children}</Wrap>` の `{...props}` はこの受け取った `props` をそのままそっくり `Wrap` に展開しています。   
+これで `onClick` や、もしあれば他の `props` が `Wrap` に展開されて使用可能になっています。
+
+#### Title
+ここまできたら、あとはじゃんじゃんコンポーネントを作っていくだけです。   
+タイトルのスタイルを包括した `Title` コンポーネントを作ります
+
+```tsx
+// ./src/components/Title.tsx
+
+import * as React from 'react'
+import styled from 'styled-components'
+
+const Title: React.SFC = ({ children, ...props }) => (
+  <Text {...props}>{children}</Text>
+)
+
+const Text = styled.h1`
+  font-weight: bold;
+  font-size: 48px;
+`
+
+export default Title
+```
+
+`Title` は特に `Props` は要らないので定義しません。
+
+#### Todo
+Todoを表示するために、まずは1つのTodoのスタイルを包括した `Todo` コンポーネントを作ります。
+
+```tsx
+import * as React from 'react'
+import styled from 'styled-components'
+
+import Button from './Button'
+
+type Props = {
+  completed?: boolean
+  onClickOperation: () => void
+}
+
+const Todo: React.SFC<Props> = ({ completed, children, onClickOperation,  ...props }) => (
+  <Wrap {...props}>
+    <TodoText className={completed ? 'strike' : null}>{children}</TodoText>
+    <Button onClick={e => onClickOperation()}>{completed ? '削除' : '完了'}</Button>
+  </Wrap>
+)
+
+const Wrap = styled.li`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  padding: 0 24px;
+  margin: 0;
+`
+
+const TodoText = styled.div`
+  &.strike {
+    text-decoration: line-through;
+  }
+`
+
+export default Todo
+```
+
+`Todo` の `Props` ではそのTodoが完了済みかどうかを受け取る `completed` と、そのTodoを操作するボタンのイベントを受け取る `onClickOperation` を定義しています。   
+   
+`TodoText` の部分で `className` に対して `strike` を付けていることに注目してください。   
+これは受け取った `compoleted` の状態によって `strike` を付けるかどうかを制御しています。   
+`.strike` のクラスを付けると、 `text-decoration: line-through;` を付け、テキストに ~~取り消し線~~ を付与します。
+
+更に、 `Button` 内では `completed` の状態によって表示するテキストを切り替えます。   
+
+#### TodoList
+1つのTodoを表示する `Todo` を作ったので、それらをリストとして表示した時のスタイルを調整する `TodoList` を作ります。
+
+```tsx
+import * as React from 'react'
+import styled from 'styled-components'
+import colors from '../constants/colors'
+
+const TodoList: React.SFC = ({ children, ...props }) => (
+  <List {...props}>
+    {children}
+  </List>
+)
+
+const List = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-bottom: solid 1px ${colors.primary};
+
+  & > li {
+    border-top: solid 1px ${colors.primary};
+  }
+`
+
+export default TodoList
+```
+
+::: tip
+今回はコンポーネントの階層の設計をせずコンポーネントの依存関係をできるだけ減らすため、 `TodoList` をスタイル調整用と割り切りました。   
+これにより `& > li` というちょっとヤバイ *CSS* がうまれてしまっており、この設計ではまずいと思った方もいるかもしれません。   
+勿論、解決する方法として`Props` に `{ name: string }[]` のようなデータを受け取り、`.map(todo => <Todo>{todo.name}</Todo>` を使用して展開するような設計もできます。   
+しかし、`Button` に依存した `Todo` を `TodoList` に依存させてしまうと、結果として `TodoList` は3階層のコンポーネントとなってしまいます。   
+階層を管理できていない今回のプロジェクトでは得策ではありません。階層ルールや命名ルールを厳密に決めて疎結合と密結合をきちんと分ける必要もあるでしょう。   
+このような問題を解決するために多くの手法が生まれています。*Extra* で紹介します（執筆中）
+:::
+
+### AddTodoForm
+`TodoList` でTodoを表示できるようになったので、Todoを追加できるフォームも作ります。   
+
+```tsx
+import * as React from 'react'
+import styled from 'styled-components'
+import colors from '../constants/colors'
+
+import Button from './Button'
+
+type Props = {
+  value: string
+  onChangeValue: (value: string) => void
+  onClickAddTodo: () => void
+}
+
+const AddTodoForm: React.SFC<Props> = ({ value, onChangeValue, onClickAddTodo, ...props }) => (
+  <Outer {...props}>
+    <Input type="text" value={value} onChange={e => onChangeValue(e.target.value)} />
+    <AddButton onClick={e => onClickAddTodo()}>追加</AddButton>
+  </Outer>
+)
+
+const Outer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  height: 40px;
+  border: solid 1px ${colors.primary};
+`
+
+const Input = styled.input`
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  padding: 0 16px;
+  flex-grow: 1;
+  height: 100%;
+  border-style: none;
+  color: ${colors.primary};
+
+  &:focus {
+    outline: 0;
+  }
+`
+
+const AddButton = styled(Button)`
+  height: 100%;
+  border-top: 0px;
+  border-right: 0px;
+  border-bottom: 0px;
+  background-color: ${colors.primary};
+  color: white;
+`
+
+export default AddTodoForm
+```
+
+まず注目して欲しいのは　`Input` のところです。   
+`<input type="text" />` のようなフォームの値を *React* から管理するには、2つの `props` を渡す必要があります。   
+
+#### value
+通常のHTMLと同じように、 `value` は `input` の中の値を入れることができます。   
+ただし、これは「初期値」という意味合いではなく `value` に入れた値が変わる度に更新されるようになります。   
+「初期値」として値を入れたい場合、 `defaultValue` という `props` を利用できます。
+
+#### onChange
+この `input` の値を更新するには、 `value` に代入している変数を変更する必要があります。   
+`input` は中の値が変更されたことを `onChange` で発火し値を返すため、その度 `value` に代入し直すメソッドを定義します。   
+ただし、`onChange` の引数は `e: React.MouseEvent` の型になっているため、実際の値には `e.target.value` でアクセスします。
+
+### Class ComponentとState
+全てのコンポーネントを作り終えたのでこれを合わせて完成を目指したいところですが、
+その前に知っておかなければ行けないことが何点かありますのでそれについて説明します。
+
+#### SFCとクラスComponent
+これまでいくつかのコンポーネントを作ってきましたが、実はこれらはすべて **SFC** (Stateless Functional Component)と呼ばれる方法で作っていました。
+*React* ではこれに加え、**Class Component** と呼ばれる作り方もあります。   
+*SFC* に比べ *Class Component* は以下のようなメリットがあります。   
+
+- 後述する **State** を扱えること
+- クラスとしてメソッドを持たせることができること
+
+*Class Component* は多機能で複雑なコードになりがちなため、できるだけ *SFC* で書いた方が良いとされています。   
+今回のTodoアプリもこれに倣って作っていました。   
+   
+*Class Component* は、コンポーネントを `class` として宣言して `React.Component` を継承して作ります。
+
+```tsx
+class Component extends React.Component {
+  render() {
+    return (
+      <div>Hello!</div>
+    )
+  }
+}
+```
+
+HTMLビューの部分は`render()` メソッドの返り値として *JSX* を返します。   
+   
+`Props` を使う場合は *SFC* とそう変わりありません。   
+
+```tsx
+class Component extends React.Component<{ color: string }> {
+  render() {
+    const { color, children, ...props } = this.props
+    return (
+      <div style={{ color }} {...props}>{children}</div>
+    )
+  }
+}
+```
+
+勿論クラスメソッドを `render()` 関数内で使用することができます。   
+
+```tsx
+class Component extends React.Component {
+  handleClick() {
+    console.log('Clicked!')    
+  }
+
+  render() {
+    return (
+      <button onClick={e => this.handleClick()}>Click Me!</button>
+    )
+  }
+}
+```
+
+このようにすれば複雑なロジックをクラスメソッドに閉じ込め、 `render()` 関数内はビューロジックに集中することができます。   
+*JSX* 内に複雑なロジックを書きっぱなしにすると最悪になります。本当です。
+大事なことなのでしっかり覚えておきましょう。   
+   
+#### State
+*React* ではビューの状態を保存し効率的に更新するため **State** と呼ばれる機能が用意されています。   
+この *State* は *Class Component* でしか使用できませんので注意して下さい。
+
+```tsx
+class Component extends React.Component<{}, { count: number }> {
+  constructor(props) {
+    super(props)
+    this.state = { count: 0 }
+  }
+
+  render() {
+    return (
+      <div style={{ display: 'flex' }}>
+        <button onClick={e => this.setState(state => ({ count: state.count + 1 }))}> + </button>
+        <div>{this.state.count}</div>
+        <button onClick={e => this.setState(state => ({ count: state.count - 1}))}> - </button>
+      </div>
+    )
+  }
+}
+```
+
+上記はシンプルなカウンターアプリケーションの例です。
+*State* を使用する時は、`constructor()` を使って **必ず** 初期化します。   
+
+::: tip
+`constructor()` メソッドを呼ぶ時は、`props` が引数で渡されるので `super()` でこれを渡し直す必要があります。
+:::
+
+*State* は `count` プロパティを持っており、`render()` 関数内で表示させています。   
+*State* へのアクセスは `this.state` から可能です。ただしこれは **読み取り専用** なことに注意して下さい。(constructorなどの例外を除いて)   
+   
+変更を加えるには `this.setState()` 関数を呼ぶ必要があります。   
+`button` エレメント内の `onClick` に `this.setState()` が記述されています。   
+ボタン押下時に `count` プロパティを増やしたり減らしたりしたいためです。   
+   
+ただ、この例はビューにロジックが書いてあって最悪になってるので、これらをクラスメソッドに逃しましょう。
+
+```tsx
+class Component extends React.Component<{}, { count: number }> {
+  constructor(props) {
+    super(props)
+    this.state = { count: 0 }
+  }
+
+  increment = () => {
+    this.setState(state => ({ count: state.count + 1 }))
+  }
+
+  decrement = () => {
+    this.setState(state => ({ count: state.count - 1 }))
+  }
+
+  render() {
+    return (
+      <div style={{ display: 'flex' }}>
+        <button onClick={e => this.increment()}> + </button>
+        <div>{this.state.count}</div>
+        <button onClick={e => this.decrement()}> - </button>
+      </div>
+    )
+  }
+}
+```
+
+関心が分離できて、わかりやすいコードになりました。
+
+### ページを作る
+最後に、これまで作ってきたコンポーネントを組み合わせてページを作りましょう。   
+ページ用にフォルダとコンポーネントを作っても良いですが、今回は1ページのみの単純なアプリのため `App.tsx` に記述することにします。   
+   
+#### 静的に作る
+いきなりロジックを書き始めると訳わからなくなるので、最初は単純なビューだけ書くと良いです。
+
+```tsx
+// ./src/App.tsx
+import * as React from 'react'
+import styled from 'styled-components'
+import colors from './constants/colors'
+
+import Todo from './components/Todo'
+import TodoList from './components/TodoList'
+import Title from './components/Title'
+import AddTodoForm from './components/AddTodoForm'
+
+class App extends React.Component {
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={'適当'}
+            onChangeValue={value => null}
+            onClickAddTodo={() => null}
+          />
+          <SpacedTodoList>
+            <Todo onClickOperation={() => null}>テスト</Todo>
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            <Todo onClickOperation={() => null} completed>テスト</Todo>
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+}
+
+const Wrapper = styled.div`
+  *, *::after, *::before {
+    box-sizing: border-box;
+  }
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 0;
+  margin: 0;
+  width: 375px;
+  margin: 0 auto;
+  padding: 0 8px;
+  color: ${colors.primary};
+`
+
+const TodosWrap = styled.div``
+
+const SpacedTodoList = styled(TodoList)`
+  margin-top: 32px;
+`
+
+const CompletedTodosWrap = styled.div`
+  margin-top: 70px;
+`
+
+export default App
+```
+
+すると、このような画面になります。
+
+<img src="/assets/img/yatteiki/react-todo-statc-app.png" />
+
+まだロジックをつくってないので、ボタンを押したり文字を変えようとしても何も起きないと思います。   
+これからこのロジック部分を作っていきましょう。   
+
+#### データ型を決める
+まずはTodoを管理する *State* の型を決めます。ロジックを作るには操作するデータがないと作れません。
+
+```tsx
+// ... some code
+type State = {
+  todos: TodoType[]
+  newTodoName: string
+}
+
+type TodoType = {
+  name: string
+  completed: boolean
+}
+
+class App extends React.Component<{}, State> {
+  constructor(props) {
+    super(props)
+    this.state = { todos: [], newTodoName: '' }
+  }
+// ... some code
+```
+
+`todos` に作ったTodoを入れ、新しいTodoのInputは違う `newTodoName` で管理します。   
+   
+#### Todoのリストを表示する
+`todos` のリストを表示するロジックを `render()` 関数内に追加します
+
+::: warning
+以下は現在執筆中です
+:::
+
+```tsx
+  // ...some code
+  constructor(props) {
+    super(props)
+    // 仮でモックデータを入れておきます
+    this.state = {
+      todos: [
+        {
+          name: 'モック1',
+          completed: false
+        },
+        {
+          name: 'モック2',
+          completed: false
+        }
+      ]
+    }
+  }
+
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={'適当'}
+            onChangeValue={value => null}
+            onClickAddTodo={() => null}
+          />
+          <SpacedTodoList>
+            {this.todos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null}>{t.name}</Todo>
+            ))}
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            {this.todos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null} completed>{t.name}</Todo>
+            ))}
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+  // ...some code
+```
