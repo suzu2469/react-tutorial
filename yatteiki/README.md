@@ -2631,10 +2631,6 @@ class App extends React.Component<{}, State> {
 #### Todoのリストを表示する
 `todos` のリストを表示するロジックを `render()` 関数内に追加します
 
-::: warning
-以下は現在執筆中です
-:::
-
 ```tsx
   // ...some code
   constructor(props) {
@@ -2648,7 +2644,7 @@ class App extends React.Component<{}, State> {
         },
         {
           name: 'モック2',
-          completed: false
+          completed: true
         }
       ]
     }
@@ -2665,7 +2661,7 @@ class App extends React.Component<{}, State> {
             onClickAddTodo={() => null}
           />
           <SpacedTodoList>
-            {this.todos.map((t, i) => (
+            {this.state.todos.map((t, i) => (
               <Todo key={i} onClickOperation={() => null}>{t.name}</Todo>
             ))}
           </SpacedTodoList>
@@ -2673,7 +2669,7 @@ class App extends React.Component<{}, State> {
         <CompletedTodosWrap>
           <Title>COMPLETED</Title>
           <TodoList>
-            {this.todos.map((t, i) => (
+            {this.state.todos.map((t, i) => (
               <Todo key={i} onClickOperation={() => null} completed>{t.name}</Todo>
             ))}
           </TodoList>
@@ -2683,3 +2679,235 @@ class App extends React.Component<{}, State> {
   }
   // ...some code
 ```
+
+*JSX* では `.map()` を使って繰り返しDOMを描画していきます。   
+その時に必ず `key` を忘れないようにしましょう。   
+これは *VirtualDOM* が再描画される時に、似たDOMの繰り返しからどれを再描画するか、 *React* が判断するための名前のようなものです。   
+`key` は一意な値であればなんでも問題ありません。今回は配列の `index` にしました。   
+
+`constructor()` で定義したTodoが表示されるか実際に確認してみてください。
+
+#### Todoのリストを出し分ける
+先程作ったモックデータは、「TODO」と「COMPLETED」で一緒のTodoが表示されていました。
+これを `completed` の値によって適切に出し分けてみましょう。
+
+```tsx
+  // ...some code
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={'適当'}
+            onChangeValue={value => null}
+            onClickAddTodo={() => null}
+          />
+          <SpacedTodoList>
+            {this.state.todos.filter(t => t.completed === false).map((t, i) => (
+              <Todo key={i} onClickOperation={() => null}>{t.name}</Todo>
+            ))}
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            {this.state.todos.filter(t => t.completed === true).map((t, i) => (
+              <Todo key={i} onClickOperation={() => null} completed>{t.name}</Todo>
+            ))}
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+  // ...some code
+```
+
+このように `filter()` を使うと配列のデータを出し分けることができます。   
+   
+しかしこれではビューにロジックが集まってきてしまったので、クラスメンバーへ逃します。   
+
+```tsx
+class App extends Reacct.Component<{}, State> {
+  // ...some code
+  get doingTodos() {
+    return this.state.todos.filter(t => t.completed === false)
+  }
+
+  get completedTodos() {
+    return this.state.todos.filter(t => t.completed === true)
+  }
+
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={'適当'}
+            onChangeValue={value => null}
+            onClickAddTodo={() => null}
+          />
+          <SpacedTodoList>
+            {this.doingTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null}>{t.name}</Todo>
+            ))}
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            {this.completedTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null} completed>{t.name}</Todo>
+            ))}
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+}
+```
+
+ビューにロジックを溜めず、積極的にクラスメンバーへ逃がすことで `render()` 関数内を簡潔にすることができてより見やすくなります。   
+
+#### 新しくTodoを作る
+今は折角追加フォームが設置されているのにうんともすんとも言わないので、これのろロジックを作っていきます。   
+まずは `AddTodoForm` の `input` の値をStateの `newTodoName` に入れれるようにて、`value` の値を `newTodoName` に直しておきます。   
+
+```tsx
+  // ...some code
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={this.state.newTodoName}
+            onChangeValue={value => this.setState({ ...this.state, newTodoName: value })}
+            onClickAddTodo={() => null}
+          />
+          <SpacedTodoList>
+            {this.doingTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null}>{t.name}</Todo>
+            ))}
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            {this.completedTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null} completed>{t.name}</Todo>
+            ))}
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+  // ...some code
+```
+
+フォームの中で文字を打てるようになっていればOKです！
+
+続いて「追加」ボタンを押したらTodoを追加できるようにしましょう。   
+クラスメソッド `addTodo()` にロジックを書いて、`onClickAddTodo` に渡します。
+
+```tsx
+  // ...some code
+  addTodo() {
+    if (this.state.newTodoName === '') return
+    const changedTodos = [...this.state.todos, { name: this.state.newTodoName, completed: false}]
+    this.setState({ ...this.state, todos: changedTodos, newTodoName: '' })
+  }
+
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={this.state.newTodoName}
+            onChangeValue={value => this.setState({ ...this.state, newTodoName: value })}
+            onClickAddTodo={() => this.addTodo()}
+          />
+          <SpacedTodoList>
+            {this.doingTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null}>{t.name}</Todo>
+            ))}
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            {this.completedTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => null} completed>{t.name}</Todo>
+            ))}
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+  // ...some code 
+```
+
+`addTodo()` では最初に、何も入力されていない状態で発火されてもTodoを追加できないようバリデーションをかけています。   
+Todoが追加できるようになっていることを確認してみましょう！
+
+#### Todoの完了と削除
+新しくTodoを追加できるようになったので、最後にTodoのステータスを変えるロジックを作っていきます。   
+
+```tsx
+class App extends Reacct.Component<{}, State> {
+  // ...some code
+  completeTodo(index: number) {
+    const changedTodos = this.state.todos.map((t, i) => {
+      if (index !== i) return t
+      return { ...t, completed: true }
+    })
+    this.setState({ ...this.state, todos: changedTodos })
+  }
+
+  deleteTodos(index: number) {
+    const changedTodos = this.state.todos.filter((_, i) => i !== index)
+    this.setState({ ...this.state, todos: changedTodos })
+  }
+
+  render() {
+    return (
+      <Wrapper>
+        <TodosWrap>
+          <Title>TODOS</Title>
+          <AddTodoForm
+            value={this.state.newTodoName}
+            onChangeValue={value => this.setState({ ...this.state, newTodoName: value })}
+            onClickAddTodo={() => this.addTodo()}
+          />
+          <SpacedTodoList>
+            {this.doingTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => this.completeTodo(i)}>{t.name}</Todo>
+            ))}
+          </SpacedTodoList>
+        </TodosWrap>
+        <CompletedTodosWrap>
+          <Title>COMPLETED</Title>
+          <TodoList>
+            {this.completedTodos.map((t, i) => (
+              <Todo key={i} onClickOperation={() => this.deleteTodo(i)} completed>{t.name}</Todo>
+            ))}
+          </TodoList>
+        </CompletedTodosWrap>
+      </Wrapper>
+    )
+  }
+}
+```
+
+ここまで来たらもう私から言うことはありません。   
+最後に色々なTodoを作ったり消したりして動作を確認して下さい！
+
+::: danger
+以下執筆中です
+:::
+
+#### おまけ LocalStorageにTodoを保存する
+ここまでのアプリケーションはあくまでブラウザのメモリ上に展開されていたため、せっかく保存したTodoもリロードすると呆気なく消えてしまいます。   
+あまりにも欠陥のあるアプリですので、Todoのデータをブラウザの *LocalStorage* に保存するように改良してみましょう。
