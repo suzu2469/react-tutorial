@@ -2876,10 +2876,63 @@ class App extends Reacct.Component<{}, State> {
 ここまで来たらもう私から言うことはありません。   
 最後に色々なTodoを作ったり消したりして動作を確認して下さい！
 
-::: danger
-以下執筆中です
-:::
-
 #### おまけ LocalStorageにTodoを保存する
 ここまでのアプリケーションはあくまでブラウザのメモリ上に展開されていたため、せっかく保存したTodoもリロードすると呆気なく消えてしまいます。   
-あまりにも欠陥のあるアプリですので、Todoのデータをブラウザの *LocalStorage* に保存するように改良してみましょう。
+せっかく追加したのにそれでは悲しいです Todoのデータをブラウザの *LocalStorage* に保存するように改良してみましょう。   
+   
+まずはTODOが追加されたタイミングで *LocalStorage* へ保存してみます。
+
+```tsx{3-6,11}
+class App extends React.Component<{}, State> {
+  // ...
+  saveTodosToLocalStorage(todos: TodoType[]) {
+    const todosString = JSON.stringify(todos)
+    window.localStorage.setItem('todos', todosString)
+  }
+    
+  addTodo() {
+    if (this.state.newTodoName === '') return
+    const changedTodos = [ ...this.state.todos, { name: this.state.newTodoName, completed: false }]
+    this.saveTodosToLocalStrage(changedTodos)
+    this.setState({ ...this.state, todos: changedTodos, newTodoName: '' })
+  }
+  // ...
+}
+```
+
+「追加」ボタンで呼ばれるメソッド `addTodo()` が呼ばれたら `this.todos` を *JSON* 化して *LocalStorage* へ保存しています。   
+
+「追加」以外にも「完了」と「削除」も変更が必要そうです。
+
+```tsx{6,12}
+  completeTodo(index: number) {
+    const changedTodos = this.state.todos.map((t, i) => {
+      if (index !== i) return t
+      return { ...t, completed: true }
+    })
+    this.saveTodosToLocalStrage(changedTodos)
+    this.setState({ ...this.state, todos: changedTodos })
+  }
+  
+  removeTodo(index: number) {
+    const changedTodos = this.state.todos.filter((_, i) => i !== index)
+    this.saveTodosToLocalStrage(changedTodos)
+    this.setState({ ...this.state, todos: changedTodos })
+  }
+```
+
+最後に、リロードした時（`App` コンポーネントが初期化された時）にTODOを *LocalStorage* から読み込んで完成です。
+
+```tsx{4-5,8-11}
+class App extends React.Component<{}, State> {
+  constructor(props) {
+    super(props)
+    const todos = this.loadTodosFromLocalStrage()
+    this.state = { newTodoName: '', todos }
+  }
+  
+  loadTodosFromLocalStrage(): TodoType[] {
+    const todosString = window.localStorage.getItem('todos') || '[]' // .getItem(): string | null なので null の時は空配列にしておく
+    return JSON.parse(todosString)
+  }
+```
