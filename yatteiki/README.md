@@ -1,45 +1,17 @@
 # やっていき
 結構適当言ってるので、マサカリは[Github](https://github.com/suzu2469/react-tutorial)のIssueから飛ばして下さい。
 ## 何をやるのか
-- 目標 -> 1ヶ月でゆるいSPAを作る
-- やること
+### やること
   - JavaScript特有の考え方を覚える
   - 最近のフロントエンド開発環境を作る
   - React & TypeScriptでTODOアプリを作る
-  - React & TypeScriptでSPAを作る
-- やらないこと
+  - React & TypeScript + Firebase でSPAを作る
+  
+ ### やらないこと
   - プログラミング基礎
-  - JavaScriptの基礎(雰囲気がわかればOK)
+  - JavaScriptの基礎(今の時点で雰囲気がわかればOK)
 
 ---
-以下更新予定
-- 悪魔のWebpack
-    - バンドラーとは
-    - webpack.config.jsの書き方
-    - 開発するときのTips
-      - npm scripts
-      - webpack-serve
-      - DevelopmentビルドとProductionビルド
-
-- いよいよReact
-    - 最低限のコード
-    - VirtualDOM？
-    - jsx? tsx?
-    - cssを書く
-
-- コンポーネント至向とVirtualDOM
-    - Reactにおけるコンポーネントとは
-    - コンポーネントの書き方
-      - SFC (Stateless Functional Component)
-      - Class Style Component
-
-- ゆるいSPAを作る(考え中)
-    - React Router
-
-- Ex. Redux
-    - Storeとは
-      - バケツリレー問題
-    - State/Reducer/Action/View
 
 ## Nodeとエディタ あとyarnとか
 
