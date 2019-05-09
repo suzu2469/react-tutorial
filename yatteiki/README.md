@@ -1,45 +1,17 @@
 # やっていき
 結構適当言ってるので、マサカリは[Github](https://github.com/suzu2469/react-tutorial)のIssueから飛ばして下さい。
 ## 何をやるのか
-- 目標 -> 1ヶ月でゆるいSPAを作る
-- やること
+### やること
   - JavaScript特有の考え方を覚える
   - 最近のフロントエンド開発環境を作る
   - React & TypeScriptでTODOアプリを作る
-  - React & TypeScriptでSPAを作る
-- やらないこと
+  - React & TypeScript + Firebase でSPAを作る
+  
+ ### やらないこと
   - プログラミング基礎
-  - JavaScriptの基礎(雰囲気がわかればOK)
+  - JavaScriptの基礎(今の時点で雰囲気がわかればOK)
 
 ---
-以下更新予定
-- 悪魔のWebpack
-    - バンドラーとは
-    - webpack.config.jsの書き方
-    - 開発するときのTips
-      - npm scripts
-      - webpack-serve
-      - DevelopmentビルドとProductionビルド
-
-- いよいよReact
-    - 最低限のコード
-    - VirtualDOM？
-    - jsx? tsx?
-    - cssを書く
-
-- コンポーネント至向とVirtualDOM
-    - Reactにおけるコンポーネントとは
-    - コンポーネントの書き方
-      - SFC (Stateless Functional Component)
-      - Class Style Component
-
-- ゆるいSPAを作る(考え中)
-    - React Router
-
-- Ex. Redux
-    - Storeとは
-      - バケツリレー問題
-    - State/Reducer/Action/View
 
 ## Nodeとエディタ あとyarnとか
 
@@ -1733,7 +1705,7 @@ ReactDOM.render(<App />, document.querySelector('#app'))
 // ./src/App.tsx
 import * as React from 'react'
 
-const App: React.SFC = props => (
+const App: React.FC = props => (
   <div>Hello World!</div>
 )
 
@@ -1961,7 +1933,7 @@ src/components/RedText
 import * as React from 'react'
 import style from './style.css'
 
-const Component: SFC = () => (
+const Component: FC = () => (
   <div className={style.red}>Red!</div>
 )
 ```
@@ -2008,7 +1980,7 @@ $ yarn add styled-components
 import * as React from 'react'
 import styled from 'styled-components'
 
-const App: React.SFC = props => (
+const App: React.FC = props => (
   <RedText>Hello My first App!</RedText>
 )
 
@@ -2102,7 +2074,7 @@ type Props = {
   onClick?: (e: React.MouseEvent) => void
 }
 
-const Button: React.SFC<Props> = ({ children, ...props }) => (
+const Button: React.FC<Props> = ({ children, ...props }) => (
   <Wrap {...props}>{children}</Wrap>
 )
 
@@ -2138,7 +2110,7 @@ export default Button
 例えば以下のようなコンポーネントは…
 
 ```tsx
-const CountText: React.SFC<{ count: number }> = (props) => (
+const CountText: React.FC<{ count: number }> = (props) => (
   <div>{props.count}</div>
 )
 ```
@@ -2147,7 +2119,7 @@ const CountText: React.SFC<{ count: number }> = (props) => (
 このコンポーネントを使う時は、
 
 ```tsx
-const ParentComponent: React.SFC = () => (
+const ParentComponent: React.FC = () => (
   <div>
     <CountText count="3" />
   </div>
@@ -2157,14 +2129,14 @@ const ParentComponent: React.SFC = () => (
 親コンポーネントから *Attribute* として記述することができます。   
 
 #### Children
-`React.SFC` では、標準で `children` の `props` が使えるようになっています。
+`React.FC` では、標準で `children` の `props` が使えるようになっています。
 
 ```tsx
-const Heading: React.SFC = (props) => {
+const Heading: React.FC = (props) => {
   <h1>{children}</h1>
 }
 
-const ParentComponent: React.SFC = () => {
+const ParentComponent: React.FC = () => {
   <Heading>Hello World!</Heding>
 }
 ```
@@ -2175,7 +2147,7 @@ const ParentComponent: React.SFC = () => {
 また、少し応用的な使い方として `props` に関数を渡すことができます。   
 
 ```tsx
-const Button: React.SFC<{ onClick: () => void }> = (props) => (
+const Button: React.FC<{ onClick: () => void }> = (props) => (
   <div onCLick={() => props.onClick()}>Click Me!</div>
 )
 ```
@@ -2183,7 +2155,7 @@ const Button: React.SFC<{ onClick: () => void }> = (props) => (
 例えばこのように、子コンポーネント上で `onClick` を定義しておいてから、
 
 ```tsx
-const ParentComponent: React.SFC = () => (
+const ParentComponent: React.FC = () => (
   <div>
     <Button onClick={() => console.log('Button is clicked!')} />
   </div>
@@ -2203,7 +2175,7 @@ type Props = {
   onClick?: (e: React.MouseEvent) => void
 }
 
-const Button: React.SFC<Props> = ({ children, ...props }) => (
+const Button: React.FC<Props> = ({ children, ...props }) => (
   <Wrap {...props}>{children}</Wrap>
 )
 ```
@@ -2211,7 +2183,7 @@ const Button: React.SFC<Props> = ({ children, ...props }) => (
 まず `type Props` は `Props` の型定義をしています。   
 `onClick` でクリックイベントを受け取れるようにしている、シンプルな `Props` です。   
    
-`React.SFC<Props>` で定義した `Props` を使用することを宣言しています。   
+`React.FC<Props>` で定義した `Props` を使用することを宣言しています。   
 引数では `({ children, ...props })` とし、`children` とその他の `Props` として `...props` で代入しています。   
 
 `<Wrap {...props}>{children}</Wrap>` の `{...props}` はこの受け取った `props` をそのままそっくり `Wrap` に展開しています。   
@@ -2227,7 +2199,7 @@ const Button: React.SFC<Props> = ({ children, ...props }) => (
 import * as React from 'react'
 import styled from 'styled-components'
 
-const Title: React.SFC = ({ children, ...props }) => (
+const Title: React.FC = ({ children, ...props }) => (
   <Text {...props}>{children}</Text>
 )
 
@@ -2255,7 +2227,7 @@ type Props = {
   onClickOperation: () => void
 }
 
-const Todo: React.SFC<Props> = ({ completed, children, onClickOperation,  ...props }) => (
+const Todo: React.FC<Props> = ({ completed, children, onClickOperation,  ...props }) => (
   <Wrap {...props}>
     <TodoText className={completed ? 'strike' : null}>{children}</TodoText>
     <Button onClick={e => onClickOperation()}>{completed ? '削除' : '完了'}</Button>
@@ -2296,7 +2268,7 @@ import * as React from 'react'
 import styled from 'styled-components'
 import colors from '../constants/colors'
 
-const TodoList: React.SFC = ({ children, ...props }) => (
+const TodoList: React.FC = ({ children, ...props }) => (
   <List {...props}>
     {children}
   </List>
@@ -2341,7 +2313,7 @@ type Props = {
   onClickAddTodo: () => void
 }
 
-const AddTodoForm: React.SFC<Props> = ({ value, onChangeValue, onClickAddTodo, ...props }) => (
+const AddTodoForm: React.FC<Props> = ({ value, onChangeValue, onClickAddTodo, ...props }) => (
   <Outer {...props}>
     <Input type="text" value={value} onChange={e => onChangeValue(e.target.value)} />
     <AddButton onClick={e => onClickAddTodo()}>追加</AddButton>
@@ -2399,15 +2371,15 @@ export default AddTodoForm
 全てのコンポーネントを作り終えたのでこれを合わせて完成を目指したいところですが、
 その前に知っておかなければ行けないことが何点かありますのでそれについて説明します。
 
-#### SFCとクラスComponent
-これまでいくつかのコンポーネントを作ってきましたが、実はこれらはすべて **SFC** (Stateless Functional Component)と呼ばれる方法で作っていました。
+#### Function Component とクラスComponent
+これまでいくつかのコンポーネントを作ってきましたが、実はこれらはすべて **FC** (Function Component)と呼ばれる方法で作っていました。
 *React* ではこれに加え、**Class Component** と呼ばれる作り方もあります。   
-*SFC* に比べ *Class Component* は以下のようなメリットがあります。   
+*FC* に比べ *Class Component* は以下のようなメリットがあります。   
 
 - 後述する **State** を扱えること
 - クラスとしてメソッドを持たせることができること
 
-*Class Component* は多機能で複雑なコードになりがちなため、できるだけ *SFC* で書いた方が良いとされています。   
+*Class Component* は多機能で複雑なコードになりがちなため、できるだけ *FC* で書いた方が良いとされています。   
 今回のTodoアプリもこれに倣って作っていました。   
    
 *Class Component* は、コンポーネントを `class` として宣言して `React.Component` を継承して作ります。
@@ -2424,7 +2396,7 @@ class Component extends React.Component {
 
 HTMLビューの部分は`render()` メソッドの返り値として *JSX* を返します。   
    
-`Props` を使う場合は *SFC* とそう変わりありません。   
+`Props` を使う場合は *FC* とそう変わりありません。   
 
 ```tsx
 class Component extends React.Component<{ color: string }> {
