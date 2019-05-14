@@ -2936,3 +2936,158 @@ class App extends React.Component<{}, State> {
     return JSON.parse(todosString)
   }
 ```
+
+## SPAを作ろう
+簡単なアプリが作れるようになったので、ここからはアプリを複数ページに分割しながらSPAを作ってみようと思います。   
+*Firebase* を使ってInstagramのようなものを作ってみましょう。完成品はこちら (作成中)
+
+### プロジェクト作成
+前回のものを流用しても良いし `create-react-app` を使っても良いですが今回はササッと作るため *Parcel* をつかって構築します。   
+必要に応じて自由に選択して下さい。
+
+```bash
+$ yarn init
+...
+
+$ yarn add -D typescript react react-dom parcel-bundler styled-components @types/react @types/react-dom @types/styled-components
+```
+
+```html
+<!-- ./src/index.html -->
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Hogestagram</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="./index.tsx"></script>
+</body>
+</html>
+```
+
+```tsx
+// ./src/index.tsx
+import * as React from 'react'
+import { render } from 'react-dom'
+
+import App from './App'
+
+render(<App />, document.querySelector('#app'))
+```
+
+```tsx
+// ./src/App.tsx
+import * as React from 'react'
+
+const App = () => {
+  return <div>Hello World!</div>
+}
+
+export default App
+```
+
+```json
+// ./tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "outDir": "dist",
+    "target": "es5",
+    "module": "esnext",
+    "jsx": "react",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "lib": [
+      "es6",
+      "es2016",
+      "es2017",
+      "dom"
+    ],
+    "paths": {
+      "~/*": ["*"]
+    }
+  }
+}
+```
+
+*Parcel* を使うために *NPM Scripts* を追加しましよう！
+
+```json
+// ./package.json
+{
+  // ...
+  "scripts": {
+    "dev": "parcel ./src/index.html",
+    "build": "parcel build ./src/index.html"
+  }
+  // ...
+}
+```
+
+これで `dev` で開発用サーバーが、 `build` で本番用ファイルが作成されるようになりました。   
+早速開発用サーバーを起動してみましょう
+
+```bash
+$ yarn dev
+```
+
+[localhost:1234](http://localhost:1234) を開いて、「Hello World」が表示されていたら成功です！
+
+これから本格的にアプリケーションを作り始めますが、その前に今回使っていくライブラリやツールについてざっと見てみましょう。
+
+### react-router v5
+`react-router` は *React* に *SPA* のルーティングを提供してくれるライブラリです。   
+ほんの少しだけ説明すると、大体以下の様に使います。 [公式Githubはこちら](https://github.com/ReactTraining/react-router)
+
+```typescript jsx
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
+// ...
+
+const Routes = () => {
+  return (
+    <Router>
+      <div>
+        <Switch>
+           <Route exact path="/" component={Home} />
+           <Route exact path="/post" component={Post} />
+           <Route component={NotFound} />
+        </Switch>
+      </div>
+    </Router>
+  )
+}
+```
+
+`<Router>` で囲むとその中が `react-router` の監視範囲になります。   
+*SPA* のようなページングは `<Switch>` で囲むと可能で、中の `<Route>` で指定された `component` が `path` とブラウザーのURLが同じ時にそれぞれ切り替わります。   
+これは実際に作ってみたほうがわかりやすいので、後ほど詳しく説明します。
+
+### Firebase
+**Firebase** は Google が提供している *MBaaS* （Mobile Backend as a Service）です。(公式サイト)[https://firebase.google.com/?hl=ja]   
+ざっくり言うとバックエンドのコードを書かずにアプリケーションを作ることができるサービスで、認証やデータベース、Webサイトのホスティング、はたまた解析ツールまでリリースされていて幅広く開発をサポートしてくれます。   
+*Firebase* はまだまだ新しい技術ですが、少しづつ採用実績も増えてきました。 これを機に覚えていきましょう。   
+今回使う *Firebase* のサービスは以下です。
+
+- Authentication（認証）
+- Firestore（*NoSQL* データベース）
+- Cloud Function（*FaaS* Function as a Service）
+- Hosting（Webホスティング）
+
+TODO: 
+- プロジェクト作成
+- 環境構築
+- これからつかうライブラリ
+- react-routerを入れる
+- 静的ページ作成
