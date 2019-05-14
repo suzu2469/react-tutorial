@@ -9,6 +9,6 @@
     "build": "vuepress build"
   },
   "dependencies": {
-    "vuepress": "^0.14.2"
+    "vuepress": "^0.14.11"
   }
 }
